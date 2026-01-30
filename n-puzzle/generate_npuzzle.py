@@ -4,9 +4,9 @@ import argparse
 def main():
 
     parser = argparse.ArgumentParser(description='Generate an n-puzzle and save it to a file.')
-    parser.add_argument('-s', '--size', type=int, help='Size of the puzzle (e.g., 3 for a 3x3 puzzle)')
-    parser.add_argument('-ml', '--maxlength', type=int, help='Maximum length of the move sequence')
-    parser.add_argument('-n', '--number', type=int, help='Number of puzzles of a given length to generate randomly (e.g., 10 for 10 puzzles)')
+    parser.add_argument('-s', '--size', type=int, help='Size of the puzzle (e.g., 3 for a 3x3 puzzle)', default=3)
+    parser.add_argument('-ml', '--maxlength', type=int, help='Maximum length of the move sequence', default=1)
+    parser.add_argument('-n', '--number', type=int, help='Number of puzzles of a given length to generate randomly (e.g., 10 for 10 puzzles)', default=1)
     parser.add_argument('dirname', default='.', type=str, help='Directory name to save the puzzle')
     parser.add_argument('-v', '--verbose', action='store_true', help='Increase output verbosity')
 

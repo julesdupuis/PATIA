@@ -26,8 +26,8 @@ IDDFS = 'iddfs'
 def solve_bfs(open : List[Node]) -> Solution:
     '''Solve the puzzle using the BFS algorithm'''
 
-    # Todo: implement BFS algorithm
-    pass
+
+    return
 
 
 def solve_dfs(open : List[Node]) -> Solution:

@@ -83,9 +83,40 @@ def make_move(current_state : State, direction : Move, dimension : int) -> State
 
     if current_state:
 
-        new_state = None
+        new_state = current_state.copy()
+        # blank tile is 0
+        blank_index = current_state.index(0)
 
-        # Todo: implement the move logic
+        if(direction == UP):
+            if(math.floor(blank_index/dimension) == dimension-1):
+                # no up move if blank is in the bottom row
+                return None
+            other_tile_index = blank_index + dimension
+
+        elif(direction == DOWN):
+            if(math.floor(blank_index/dimension) == 0):
+                # no down move if blank is in the top row
+                return None
+            other_tile_index = blank_index - dimension
+
+        elif(direction == LEFT):
+            if(blank_index%dimension == dimension-1):
+                # no left move if blank is in the left column
+                return None
+            other_tile_index = blank_index + 1
+
+        elif(direction == RIGHT):
+            if(blank_index%dimension == 0):
+                # no right move if blank is in the right column
+                return None
+            other_tile_index = blank_index - 1
+
+        else:
+            return None
+
+        other_tile = current_state[other_tile_index]
+        new_state[blank_index] = other_tile
+        new_state[other_tile_index] = 0
 
         return new_state
     else:
