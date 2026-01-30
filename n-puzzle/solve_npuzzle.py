@@ -28,9 +28,11 @@ def solve_bfs(open : List[Node]) -> Solution:
     '''Solve the puzzle using the BFS algorithm'''
 
     dimension = int(math.sqrt(len(open[0].state)))
+    goal = create_goal(dimension)
     while(len(open)>0):
+        # get oldest element from the list
         current = open.pop(0)
-        if(is_goal(current.state, create_goal(dimension))):
+        if(is_goal(current.state, goal)):
             return current.get_path()
         for move in [UP, DOWN, LEFT, RIGHT]:
             new_state = make_move(current.state, move, dimension)
@@ -38,12 +40,40 @@ def solve_bfs(open : List[Node]) -> Solution:
                 open.append(Node(new_state, move, parent=current))
     return []
 
+def oppositeMove(move : Move) -> Move:
+    if(move == UP):
+        return DOWN
+    elif(move == DOWN):
+        return  UP
+    elif(move == LEFT):
+        return RIGHT
+    elif(move == RIGHT):
+        return LEFT
+    else:
+        return
 
 def solve_dfs(open : List[Node]) -> Solution:
     '''Solve the puzzle using the DFS algorithm'''
 
-    # Todo: implement DFS algorithm
-    pass
+    dimension = int(math.sqrt(len(open[0].state)))
+    goal = create_goal(dimension)
+    while(len(open)>0):
+        # get newest element from the list
+        current = open.pop()
+        if(is_goal(current.state, goal)):
+            return current.get_path()
+        # else:
+        #     path = current.get_path()
+        #     print(path, ' : ', len(path))
+        for move in [UP, DOWN, LEFT, RIGHT]:
+            if(move == oppositeMove(current.move)):
+                continue
+            new_state = make_move(current.state, move, dimension)
+            if(new_state != None):
+                open.append(Node(new_state, move, parent=current))
+                # print('state:')
+                # print(to_string(new_state))
+    return []
 
 def solve_astar(open : List[Node]) -> Solution:
     '''Solve the puzzle using the A* algorithm'''
