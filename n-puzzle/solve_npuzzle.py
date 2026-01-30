@@ -11,7 +11,8 @@ from npuzzle import (Solution,
                      is_goal,
                      is_solution,
                      load_puzzle,
-                     to_string)
+                     to_string,
+                     make_move)
 from node import Node
 from typing import Literal, List
 import argparse
@@ -26,8 +27,16 @@ IDDFS = 'iddfs'
 def solve_bfs(open : List[Node]) -> Solution:
     '''Solve the puzzle using the BFS algorithm'''
 
-
-    return
+    dimension = int(math.sqrt(len(open[0].state)))
+    while(len(open)>0):
+        current = open.pop(0)
+        if(is_goal(current.state, create_goal(dimension))):
+            return current.get_path()
+        for move in [UP, DOWN, LEFT, RIGHT]:
+            new_state = make_move(current.state, move, dimension)
+            if(new_state != None):
+                open.append(Node(new_state, move, parent=current))
+    return []
 
 
 def solve_dfs(open : List[Node]) -> Solution:
