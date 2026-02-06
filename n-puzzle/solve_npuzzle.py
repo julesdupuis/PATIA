@@ -75,17 +75,44 @@ def solve_dfs(open : List[Node]) -> Solution:
                 # print(to_string(new_state))
     return []
 
+def manhattan(x : int, y : int, u: int, v: int) -> int:
+    return abs(x-u) + abs(y-v)
+
 def solve_astar(open : List[Node]) -> Solution:
     '''Solve the puzzle using the A* algorithm'''
 
-    # Todo: implement A* algorithm
-    pass
+    dimension = int(math.sqrt(len(open[0].state)))
+    goal = create_goal(dimension)
+    closed : List[Node] = []
+    while(len(open)>0):
+        current = open.pop()
+        if(is_goal(current.get_state(), goal)):
+            return current.get_path()
+        for move in [UP, DOWN, LEFT, RIGHT]:
+            new_state = make_move(current.state, move, dimension)
+            if(new_state != None):
+                new_node = Node(new_state, move, parent=current, cost=1)
+                if(not(closed.count(new_node)>0 \
+                       or (open.count(new_node)>0 \
+                           and open[open.index(new_node)].cost < new_node.cost))):
+                    new_node.cost = current.cost+1
+                    new_node.heuristic = new_node.cost \
+                        + heuristic(current.get_state(), goal)
+                    open.append(new_node)
+        closed.append(current)
+    return []
 
 def heuristic(current_state : State, goal_state : State) -> int:
     '''Calculate the Manhattan distance of the puzzle'''
 
-    # Todo: implement the heuristic function
-    pass
+    h : int = 0
+    dimension = int(math.sqrt(len(current_state)))
+    for index in range(len(current_state)):
+        index_goal = goal_state.index(current_state[index])
+
+        h += manhattan(index//dimension, index%dimension, \
+                       index_goal//dimension, index_goal%dimension)
+    return h
 
 def depth_limited_search(node: Node, limit: int, goal_state: State, moves: List[Move], dimension: int) -> Solution | None:
     '''Perform a depth-limited search'''
