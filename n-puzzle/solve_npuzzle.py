@@ -38,7 +38,7 @@ def solve_bfs(open : List[Node]) -> Solution:
             new_state = make_move(current.state, move, dimension)
             if(new_state != None):
                 open.append(Node(new_state, move, parent=current))
-    return []
+    raise ValueError
 
 def oppositeMove(move : Move) -> Move:
     if(move == UP):
@@ -52,6 +52,16 @@ def oppositeMove(move : Move) -> Move:
     else:
         return
 
+def alreadyHappened(new_node : Node, current_node : Node) -> bool:
+    current = current_node
+    if(new_node == current):
+        return True
+    while(current.parent):
+        current = current.parent
+        if(new_node == current):
+            return True
+    return False
+
 def solve_dfs(open : List[Node]) -> Solution:
     '''Solve the puzzle using the DFS algorithm'''
 
@@ -62,18 +72,13 @@ def solve_dfs(open : List[Node]) -> Solution:
         current = open.pop()
         if(is_goal(current.state, goal)):
             return current.get_path()
-        # else:
-        #     path = current.get_path()
-        #     print(path, ' : ', len(path))
         for move in [UP, DOWN, LEFT, RIGHT]:
-            if(move == oppositeMove(current.move)):
-                continue
             new_state = make_move(current.state, move, dimension)
             if(new_state != None):
-                open.append(Node(new_state, move, parent=current))
-                # print('state:')
-                # print(to_string(new_state))
-    return []
+                new_node = Node(new_state, move, parent=current)
+                if(not alreadyHappened(new_node, current)):
+                    open.append(new_node)
+    raise ValueError
 
 def manhattan(x : int, y : int, u: int, v: int) -> int:
     return abs(x-u) + abs(y-v)
@@ -107,7 +112,7 @@ def solve_astar(open : List[Node]) -> Solution:
                         + heuristic(current.get_state(), goal)
                     appendPriority(open, new_node)
         closed.append(current)
-    return []
+    raise ValueError
 
 def heuristic(current_state : State, goal_state : State) -> int:
     '''Calculate the Manhattan distance of the puzzle'''
