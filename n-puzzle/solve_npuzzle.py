@@ -65,6 +65,7 @@ def alreadyHappened(new_node : Node, current_node : Node) -> bool:
 def solve_dfs(open : List[Node]) -> Solution:
     '''Solve the puzzle using the DFS algorithm'''
 
+    limit = 100
     dimension = int(math.sqrt(len(open[0].state)))
     goal = create_goal(dimension)
     while(len(open)>0):
@@ -76,7 +77,8 @@ def solve_dfs(open : List[Node]) -> Solution:
             new_state = make_move(current.state, move, dimension)
             if(new_state != None):
                 new_node = Node(new_state, move, parent=current)
-                if(not alreadyHappened(new_node, current)):
+                new_node.cost = current.cost+1
+                if(new_node.cost < limit and not alreadyHappened(new_node, current)):
                     open.append(new_node)
     raise ValueError
 
