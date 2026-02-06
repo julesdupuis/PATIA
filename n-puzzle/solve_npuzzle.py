@@ -78,6 +78,13 @@ def solve_dfs(open : List[Node]) -> Solution:
 def manhattan(x : int, y : int, u: int, v: int) -> int:
     return abs(x-u) + abs(y-v)
 
+def appendPriority(priorityQueue : List[Node], element : Node):
+    for index in range(len(priorityQueue)):
+        if(element.heuristic >= priorityQueue[index].heuristic):
+            priorityQueue.insert(index, element)
+            return
+    priorityQueue.append(element)
+
 def solve_astar(open : List[Node]) -> Solution:
     '''Solve the puzzle using the A* algorithm'''
 
@@ -98,7 +105,7 @@ def solve_astar(open : List[Node]) -> Solution:
                     new_node.cost = current.cost+1
                     new_node.heuristic = new_node.cost \
                         + heuristic(current.get_state(), goal)
-                    open.append(new_node)
+                    appendPriority(open, new_node)
         closed.append(current)
     return []
 
