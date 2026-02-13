@@ -131,14 +131,35 @@ def heuristic(current_state : State, goal_state : State) -> int:
 def depth_limited_search(node: Node, limit: int, goal_state: State, moves: List[Move], dimension: int) -> Solution | None:
     '''Perform a depth-limited search'''
 
-    # Todo: implement depth-limited search
-    pass
+    if(limit <= 0):
+        if(is_goal(node.get_state(), goal_state)):
+            return moves
+        else:
+            return None
+
+    else:
+        for move in [UP, DOWN, LEFT, RIGHT]:
+            child = make_move(node.get_state(), move, dimension)
+            if(child == None):
+                continue
+            solution = moves.copy()
+            solution.append(move)
+            result = depth_limited_search(Node(child, move), limit-1,
+                goal_state, solution, dimension)
+            if(result != None):
+                return result
+        return None
 
 def solve_iddfs(root: Node, max_depth: int) -> Solution:
     '''Solve the puzzle using the Iterative Deepening Depth-First Search algorithm'''
 
-    # Todo: implement IDDFS algorithm
-    pass
+    dimension = int(math.sqrt(len(root.get_state())))
+    goal = create_goal(dimension)
+    for depth in range(0, max_depth):
+        result = depth_limited_search(root, depth,
+            goal, [], dimension)
+        if(result != None):
+            return result
 
 def main():
     parser = argparse.ArgumentParser(description='Load an n-puzzle and solve it.')
