@@ -1,5 +1,0 @@
-2
-hanoi/domain.pddl
-hanoi/p01.pddl
-10
-3
