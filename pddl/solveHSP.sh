@@ -1,9 +1,7 @@
 #!/bin/env bash
 
-timeOut=60
-
 if [[ $# -lt 3 ]]; then
-    echo "usage : $0 <domainFile> <problemFile> <heuristic>"
+    echo "usage : $0 <domainFile> <problemFile> <heuristic> [timeOut]"
     echo "heuristics :
     'AJUSTED_SUM'
     'AJUSTED_SUM2'
@@ -20,5 +18,8 @@ fi
 domainFile=$1
 problemFile=$2
 heuristic=$3
+timeOut=${4:-60}
+
+echo "time out : $timeOut"
 
 java -cp ./pddl4j-4.0.0.jar -server -Xms2048m -Xmx2048m fr.uga.pddl4j.planners.statespace.HSP "$domainFile" "$problemFile" -t "$timeOut" -e "$heuristic"
