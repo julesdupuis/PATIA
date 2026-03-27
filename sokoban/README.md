@@ -11,10 +11,10 @@ mvn install:install-file \
    -Dversion=4.0.0 \
    -Dpackaging=jar \
    -DgeneratePom=true
- ```  
+ ```
 Work with maven: mvn clean, mvn compile, mvn test, mvn package
 
-Run with: 
+Run with:
 ````
 java --add-opens java.base/java.lang=ALL-UNNAMED \
       -server -Xms2048m -Xmx2048m \
@@ -30,4 +30,8 @@ java --add-opens java.base/java.lang=ALL-UNNAMED \
 ```
 Sorry ```mvn exec:java``` has still an open issue ("Directory src/main/resources/view/assets not found.")
 
+You can use the script `launch.sh` to start the program.
+
 See planning solutions at http://localhost:8888/test.html
+
+You can use the script `testAgent.sh` to start only the agent.

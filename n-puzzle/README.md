@@ -1,5 +1,7 @@
-use generate_pzzle.py to create puzzles
+Use `generate_puzzle.py` to create puzzles.
 
-use solve_puzzle.py to solve puzzles
+Use `solve_puzzle.py` to solve puzzles.
 
-use interactive_test_move_puzzle.py to test the make_move function
+Use `interactive_test_move_puzzle.py` to test the make_move function.
+
+Use `graph.py` to generate a graph comparing the algorithms.
