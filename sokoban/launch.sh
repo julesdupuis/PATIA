@@ -1,6 +1,6 @@
 #!/bin/env bash
 
-mvn clean package
+mvn -q package
 
 java --add-opens java.base/java.lang=ALL-UNNAMED \
       -server -Xms2048m -Xmx2048m \

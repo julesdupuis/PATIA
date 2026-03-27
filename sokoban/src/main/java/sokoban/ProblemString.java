@@ -1,8 +1,13 @@
 package sokoban;
 
 import java.util.ArrayList;
+import java.util.List;
+
+import fr.uga.pddl4j.problem.operator.Action;
 
 public class ProblemString {
+    public ArrayList<Position> positions;
+
     public static class Position{
         private int x;
         private int y;
@@ -47,8 +52,8 @@ public class ProblemString {
         }
     }
 
-    public static String get(String levelString){
-        ArrayList<Position> positions = new ArrayList<>();
+    public String get(String levelString){
+        positions = new ArrayList<>();
         ArrayList<Position> goals = new ArrayList<>();
         ArrayList<Position> boxes = new ArrayList<>();
         ArrayList<Position> notboxes = new ArrayList<>();
@@ -70,14 +75,14 @@ public class ProblemString {
                 width = newWidth;
             }
         }
-        System.err.println("width height : "+width+", "+height+";");
+        // System.err.println("width height : "+width+", "+height+";");
 
         // skipping first and last lines containing only walls
         for(int y = 1; y<height-1; y++){
             // searching begining and end of the floor
             int skipEmpty = level[y].indexOf('#');
             int skipEmptyEnd = level[y].lastIndexOf('#');
-            System.err.println("begin end : "+skipEmpty+", "+skipEmptyEnd+";");
+            // System.err.println("begin end : "+skipEmpty+", "+skipEmptyEnd+";");
 
             int consecutiveFloorCount = 0;
 
@@ -173,7 +178,7 @@ public class ProblemString {
         res.append(
             "(define (problem sokoban-problem)\n"+
             "(:domain sokoban)\n"+
-            "(objects "
+            "(:objects "
         );
 
         for(Position pos : positions){
@@ -213,6 +218,49 @@ public class ProblemString {
         }
 
         res.append(")))");
+
+        return res.toString();
+    }
+
+    public static char getDirection(Position p1, Position p2){
+        Position pDiff = new Position(p1.x - p2.x, p1.y - p2.y);
+        if(pDiff.x < 0){
+            if(pDiff.y != 0){
+                throw new IllegalStateException("no direction for move "+p1.get()+", "+p2.get());
+            }
+            return 'L';
+        }
+        if(pDiff.x > 0){
+            if(pDiff.y != 0){
+                throw new IllegalStateException("no direction for move "+p1.get()+", "+p2.get());
+            }
+            return 'R';
+        }
+        if(pDiff.x == 0){
+            if(pDiff.y < 0){
+                return 'D';
+            }
+            if(pDiff.y > 0){
+                return 'U';
+            }
+            if(pDiff.y == 0){
+                throw new IllegalStateException("no direction for move "+p1.get()+", "+p2.get());
+            }
+        }
+        throw new IllegalStateException("no direction for move "+p1.get()+", "+p2.get());
+    }
+
+    public String parseSolution(List<Action> actions){
+        StringBuilder res = new StringBuilder();
+
+        for(Action action : actions){
+            // System.err.println(action.getName());
+            for(int param = 0; param<action.arity(); param++){
+                // System.err.println(param+" : "+action.getValueOfParameter(param)+";");
+                // System.err.println(positions.get(action.getValueOfParameter(param)).get());
+            }
+            res.append(getDirection(positions.get(action.getValueOfParameter(0)), positions.get(action.getValueOfParameter(1))));
+        }
 
         return res.toString();
     }
