@@ -79,37 +79,45 @@ public class ProblemString {
             int skipEmptyEnd = level[y].lastIndexOf('#');
             System.err.println("begin end : "+skipEmpty+", "+skipEmptyEnd+";");
 
+            int consecutiveFloorCount = 0;
+
             for(int x = skipEmpty+1; x<skipEmptyEnd; x++){
                 switch(level[y].charAt(x)){
                     case '#':
+                        consecutiveFloorCount = 0;
                         break;
 
                     case ' ':
                         notboxes.add(new Position(x, y));
                         positions.add(new Position(x, y));
+                        consecutiveFloorCount++;
                         break;
 
                     case '@':
                         player = new Position(x, y);
                         notboxes.add(new Position(x, y));
                         positions.add(new Position(x, y));
+                        consecutiveFloorCount++;
                         break;
 
                     case '$':
                         boxes.add(new Position(x, y));
                         positions.add(new Position(x, y));
+                        consecutiveFloorCount++;
                         break;
 
                     case '.':
                         goals.add(new Position(x, y));
                         notboxes.add(new Position(x, y));
                         positions.add(new Position(x, y));
+                        consecutiveFloorCount++;
                         break;
 
                     case '*':
                         boxes.add(new Position(x, y));
                         goals.add(new Position(x, y));
                         positions.add(new Position(x, y));
+                        consecutiveFloorCount++;
                         break;
 
                     case '+':
@@ -117,10 +125,44 @@ public class ProblemString {
                         goals.add(new Position(x, y));
                         notboxes.add(new Position(x, y));
                         positions.add(new Position(x, y));
+                        consecutiveFloorCount++;
                         break;
 
                     default:
                         break;
+                }
+                if(consecutiveFloorCount>=2){
+                    neighbors.add(new Neighbor(new Position(x-1, y), new Position(x, y)));
+                }
+                if(consecutiveFloorCount>=3){
+                    aligneds.add(new Aligned(new Position(x-2, y), new Position(x-1, y), new Position(x, y)));
+                }
+            }
+        }
+
+        // vertical neighbor and aligned positions
+        for(int x = 1; x<width-1; x++){
+            boolean insideFloor = false;
+            int consecutiveFloorCount = 0;
+            for(int y = 0; y<height-1; y++){
+                if(level[y].length()<= x){
+                    break;
+                }
+                if(level[y].charAt(x) == '#'){
+                    insideFloor = true;
+                    consecutiveFloorCount = 0;
+                    continue;
+                }
+                if(insideFloor){
+                    if(level[y].charAt(x) != '#'){
+                        consecutiveFloorCount++;
+                    }
+                    if(consecutiveFloorCount>=2){
+                        neighbors.add(new Neighbor(new Position(x, y-1), new Position(x, y)));
+                    }
+                    if(consecutiveFloorCount>=3){
+                        aligneds.add(new Aligned(new Position(x, y-2), new Position(x, y-1), new Position(x, y)));
+                    }
                 }
             }
         }
