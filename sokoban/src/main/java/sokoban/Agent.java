@@ -20,6 +20,25 @@ import fr.uga.pddl4j.planners.statespace.FF;
 
 public class Agent {
     public static void main(String[] args) {
+
+        // javassist.Loader 3.22 ne délègue pas les classes jdk.* au classloader
+        // parent par défaut. Quand log4j-core initialise PatternParser, la JVM
+        // génère jdk.internal.reflect.ConstructorAccessorImpl pour les proxys
+        // d'annotations ; javassist tente de définir cette classe interne JDK
+        // lui-même et échoue (IllegalAccessError sur MagicAccessorImpl).
+        // On reconfigure la liste de délégation avant tout accès à log4j/pddl4j.
+        ClassLoader cl = Agent.class.getClassLoader();
+        if (cl instanceof javassist.Loader) {
+            javassist.Loader jcl = (javassist.Loader) cl;
+            // Reproduit la liste par défaut ET ajoute jdk.*
+            for (String pkg : new String[] {
+                    "java.", "javax.", "sun.", "com.sun.",
+                    "org.w3c.", "org.xml.", "jdk." }) {
+                jcl.delegateLoadingOf(pkg);
+            }
+        }
+        Thread.currentThread().setContextClassLoader(cl);
+
         if(SokobanMain.testFile == null){
             SokobanMain.testFile = "test0.json";
         }

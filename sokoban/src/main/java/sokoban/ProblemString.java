@@ -228,13 +228,13 @@ public class ProblemString {
             if(pDiff.y != 0){
                 throw new IllegalStateException("no direction for move "+p1.get()+", "+p2.get());
             }
-            return 'L';
+            return 'R';
         }
         if(pDiff.x > 0){
             if(pDiff.y != 0){
                 throw new IllegalStateException("no direction for move "+p1.get()+", "+p2.get());
             }
-            return 'R';
+            return 'L';
         }
         if(pDiff.x == 0){
             if(pDiff.y < 0){
