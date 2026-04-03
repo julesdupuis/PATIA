@@ -39,9 +39,6 @@ public class Agent {
         }
         Thread.currentThread().setContextClassLoader(cl);
 
-        if(SokobanMain.testFile == null){
-            SokobanMain.testFile = "test0.json";
-        }
         try{
             // reads Sokoban levels and encodes them as a PDDL problem
             BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream("config/"+SokobanMain.testFile)));
