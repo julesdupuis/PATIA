@@ -12,6 +12,6 @@ public class SokobanMain {
         gameRunner.setAgent(Agent.class);
         gameRunner.setTestCase(testFile);
 
-        gameRunner.start();
+        gameRunner.start(4200);
     }
 }

@@ -21,7 +21,7 @@ import fr.uga.pddl4j.planners.statespace.FF;
 public class Agent {
     public static void main(String[] args) {
         if(SokobanMain.testFile == null){
-            SokobanMain.testFile = "test1.json";
+            SokobanMain.testFile = "test0.json";
         }
         try{
             // reads Sokoban levels and encodes them as a PDDL problem
