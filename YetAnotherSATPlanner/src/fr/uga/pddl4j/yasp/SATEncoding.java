@@ -73,21 +73,41 @@ public final class SATEncoding {
         // We get the initial state from the planning problem
         // State is a bit vector where the ith bit at 1 corresponds to the ith fluent being true
         final int nb_fluents = problem.getFluents().size();
-        //System.out.println(" fluents = " + nb_fluents );
-        final BitVector init = problem.getInitialState().getPositiveFluents();
-        
-        // TO BE DONE!
+        System.out.println(" fluents = " + nb_fluents );
+
+        addFluent(problem.getInitialState().getPositiveFluents(), initList);
+
+        final BitVector goal = problem.getGoal().getPositiveFluents();
+        for(int index=0; index<goal.size(); index++){
+            if(goal.get(index)){
+                goalList.add(index);
+            }
+        }
+
+        final List<Action> actions = problem.getActions();
+        for(Action action : actions){
+            addFluent(action.getPrecondition().getPositiveFluents(), actionPreconditionList);
+            addFluent(action.getUnconditionalEffect().getPositiveFluents(), actionEffectList);
+        }
 
         // Makes DIMACS encoding from 1 to steps
         encode(1, steps);
     }
-    
+
+    private void addFluent(BitVector fluentList, List<List<Integer>> clauseList){
+        for(int index=0; index<fluentList.size(); index++){
+            if(fluentList.get(index)){
+                clauseList.add(List.of(index));
+            }
+        }
+    }
+
     /*
      * SAT encoding for next step
      */
     public void next() {
         this.steps++;
-        encode(this.steps, this.steps);
+        encode(1, this.steps);
     }
 
     public String toString(final List<Integer> clause, final Problem problem) {
@@ -154,7 +174,7 @@ public final class SATEncoding {
         }
         return plan;
     }
-    
+
     // Cantor paring function generates unique numbers
     private static int pair(int num, int step) {
         return (int) (0.5 * (num + step) * (num + step + 1) + step);
@@ -173,11 +193,29 @@ public final class SATEncoding {
 
     private void encode(int from, int to) {
         this.currentDimacs.clear();
-        
-        // TO BE DONE!
+        this.currentGoal.clear();
+
+        for(List<Integer> init : initList){
+            // init state step is 1
+            this.currentDimacs.add(List.of(pair(init.get(0), 1)));
+        }
+
+        for(int index=from; index < to; index++){
+            encodeFluents(actionPreconditionList, index);
+            encodeFluents(actionEffectList, index);
+        }
+
+        for(int goal : goalList){
+            this.currentGoal.add(pair(goal+1, to));
+        }
 
         System.out.println("Encoding : successfully done (" + (this.currentDimacs.size()
                 + this.currentGoal.size()) + " clauses, " + to + " steps)");
     }
 
+    private void encodeFluents(List<List<Integer>> fluents, int step){
+        for(List<Integer> clause : fluents){
+            this.currentDimacs.add(List.of(pair(clause.get(0)+1, step)));
+        }
+    }
 }

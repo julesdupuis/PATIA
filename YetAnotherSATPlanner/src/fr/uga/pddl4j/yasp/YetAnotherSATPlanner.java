@@ -17,13 +17,11 @@ import org.sat4j.minisat.SolverFactory;
 import org.sat4j.specs.ContradictionException;
 import org.sat4j.specs.IProblem;
 import org.sat4j.specs.ISolver;
-import org.sat4j.specs.IVecInt;
 import org.sat4j.specs.TimeoutException;
 
 import java.io.FileNotFoundException;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * The class shows how to use PDDL4J + SAT4J libraries to create a SAT planner.
@@ -95,14 +93,64 @@ public class YetAnotherSATPlanner extends AbstractStateSpacePlanner {
             // Prepare the solver to accept MAXVAR variables. MANDATORY for MAXSAT solving
             solver.newVar(MAXVAR);
             solver.setExpectedNumberOfClauses(NBCLAUSES);
-            IProblem ip = solver;
 
-            // Seach starts here!
+            // Search starts here!
             boolean doSearch = true;
 
             while (doSearch && !(steps > stepmax)) {
-                
-                // TO BE DONE!
+                // add clauses
+                for(int index=0; index<sat.currentDimacs.size(); index++){
+                    List<Integer> tmp = sat.currentDimacs.get(index);
+
+                    int[] clause = new int[tmp.size()];
+                    for(int jndex=0; jndex<clause.length; jndex++){
+                        clause[jndex] = tmp.get(jndex);
+                    }
+
+                    try {
+                        solver.addClause(new VecInt(clause));
+                    } catch (ContradictionException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                // goal
+                int[] clause = new int[sat.currentGoal.size()];
+                for(int jndex=0; jndex<clause.length; jndex++){
+                    clause[jndex] = sat.currentGoal.get(jndex);
+                }
+
+                try {
+                    solver.addClause(new VecInt(clause));
+                } catch (ContradictionException e) {
+                    e.printStackTrace();
+                }
+
+                IProblem ip = solver;
+                try {
+                    doSearch = !ip.isSatisfiable();
+                } catch (TimeoutException e) {
+                    e.printStackTrace();
+                }
+                if(doSearch){
+                    sat.next();
+                    steps++;
+                }else{
+                    System.out.println("problem solved");
+                    int[] model = {};
+                    try {
+                        model = ip.findModel();
+                    } catch (TimeoutException e) {
+                        e.printStackTrace();
+                    }
+                    List<Integer> solution = new ArrayList<>();
+                    for(int item : model){
+                        solution.add(item);
+                    }
+                    System.out.println(solution);
+                    plan = sat.extractPlan(solution, problem);
+                    System.out.println(sat.toString(solution, problem));
+                }
             }
         }
         return plan;
@@ -130,14 +178,14 @@ public class YetAnotherSATPlanner extends AbstractStateSpacePlanner {
                     System.out.println(m.toString());
                 }
             } else {
-                
+
                 // Creates an instance of the SAT planner
                 final YetAnotherSATPlanner planner = new YetAnotherSATPlanner();
 
                 // Prints that the domain and the problem were successfully parsed
                 System.out.print("\nparsing domain file \"" + args[0] + "\" done successfully");
                 System.out.print("\nparsing problem file \"" + args[1] + "\" done successfully\n\n");
-                
+
                 // Create a problem
                 final Problem problem = planner.instantiate(parsedProblem);
 
@@ -146,9 +194,9 @@ public class YetAnotherSATPlanner extends AbstractStateSpacePlanner {
                     System.out.println("Goal can be simplified to FALSE. No search will solve it");
                     System.exit(0);
                 } else {
-                    
+
                     Plan plan = planner.solve(problem);
-                        
+
                         if (plan != null) {
                             System.out.println(problem.toString(plan));
                         } else {
