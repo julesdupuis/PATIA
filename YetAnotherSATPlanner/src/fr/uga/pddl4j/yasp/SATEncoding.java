@@ -8,6 +8,7 @@ import fr.uga.pddl4j.problem.operator.Action;
 import fr.uga.pddl4j.util.BitVector;
 
 import java.util.List;
+import java.util.Map;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -31,6 +32,7 @@ public final class SATEncoding {
     /*
      * Actions
      */
+    private final int nb_actions;
     private List<List<Integer>> actionPreconditionList = new ArrayList<List<Integer>>();
     private List<List<Integer>> actionEffectList = new ArrayList<List<Integer>>();
 
@@ -49,7 +51,7 @@ public final class SATEncoding {
     /*
      * Current DIMACS encoding of the planning domain and problem for #steps steps
      * Contains the initial state, actions and action disjunction
-     * Goal is no there!
+     * Goal is not there!
      */
     public List<List<Integer>> currentDimacs = new ArrayList<List<Integer>>();
 
@@ -75,31 +77,64 @@ public final class SATEncoding {
         final int nb_fluents = problem.getFluents().size();
         System.out.println(" fluents = " + nb_fluents );
 
-        addFluent(problem.getInitialState().getPositiveFluents(), initList);
+        // initial state
+        final BitVector initState = problem.getInitialState().getPositiveFluents();
+        for(int index=0; index<initState.size(); index++){
+            initList.add(List.of(initState.get(index) ? index+1 : -(index+1)));
+            // if(initState.get(index)){
+            //     initList.add(List.of(index+1));
+            // }
+        }
 
+        // goal
         final BitVector goal = problem.getGoal().getPositiveFluents();
         for(int index=0; index<goal.size(); index++){
             if(goal.get(index)){
-                goalList.add(index);
+                goalList.add(index+1);
             }
         }
 
+        // actions
         final List<Action> actions = problem.getActions();
-        for(Action action : actions){
-            addFluent(action.getPrecondition().getPositiveFluents(), actionPreconditionList);
-            addFluent(action.getUnconditionalEffect().getPositiveFluents(), actionEffectList);
+        this.nb_actions = actions.size();
+        for(int index=0; index<actions.size(); index++){
+            Action action = actions.get(index);
+
+            // preconditions
+            final BitVector preconds = action.getPrecondition().getPositiveFluents();
+            for(int jndex=0; jndex<preconds.size(); jndex++){
+                if(preconds.get(jndex)){
+                    actionPreconditionList.add(List.of(jndex+1));
+                }
+            }
+
+            // effects
+            final BitVector effects = action.getUnconditionalEffect().getPositiveFluents();
+            for(int jndex=0; jndex<effects.size(); jndex++){
+                if(effects.get(jndex)){
+                    actionEffectList.add(List.of(jndex+1));
+
+                    // for state transitions
+                    if(addList.containsKey(jndex+1)){
+                        addList.get(jndex+1).add(index+1);
+                    }else{
+                        addList.put(jndex+1, new ArrayList<Integer>(index+1));
+                    }
+                }
+            }
+
+            // state transitions
+
+            // disjonctions
+            for(int jndex=0; jndex<actions.size(); jndex++){
+                if(index != jndex){
+                    actionDisjunctionList.add(List.of(-(index+1), -(jndex+1)));
+                }
+            }
         }
 
         // Makes DIMACS encoding from 1 to steps
         encode(1, steps);
-    }
-
-    private void addFluent(BitVector fluentList, List<List<Integer>> clauseList){
-        for(int index=0; index<fluentList.size(); index++){
-            if(fluentList.get(index)){
-                clauseList.add(List.of(index));
-            }
-        }
     }
 
     /*
@@ -110,7 +145,7 @@ public final class SATEncoding {
         encode(1, this.steps);
     }
 
-    public String toString(final List<Integer> clause, final Problem problem) {
+    public static String toString(final List<Integer> clause, final Problem problem) {
         final int nb_fluents = problem.getFluents().size();
         List<Integer> dejavu = new ArrayList<Integer>();
         String t = "[";
@@ -140,14 +175,18 @@ public final class SATEncoding {
                     Fluent fluent = problem.getFluents().get(b - 1);
                     u = u + problem.toString(fluent)  + "\n";
                 } else {
-                    u = u + problem.toShortString(problem.getActions().get(b - nb_fluents - 1)) + "\n";
+                    if(b-nb_fluents-1>=problem.getActions().size()){
+                        u += (b-nb_fluents-1)+" ?\n";
+                    }else{
+                        u = u + problem.toShortString(problem.getActions().get(b - nb_fluents - 1)) + "\n";
+                    }
                 }
             }
         }
         return t + u;
     }
 
-    public Plan extractPlan(final List<Integer> solution, final Problem problem) {
+    public static Plan extractPlan(final List<Integer> solution, final Problem problem) {
         Plan plan = new SequentialPlan();
         HashMap<Integer, Action> sequence = new HashMap<Integer, Action>();
         final int nb_fluents = problem.getFluents().size();
@@ -175,7 +214,7 @@ public final class SATEncoding {
         return plan;
     }
 
-    // Cantor paring function generates unique numbers
+    // Cantor pairing function generates unique numbers
     private static int pair(int num, int step) {
         return (int) (0.5 * (num + step) * (num + step + 1) + step);
     }
@@ -183,7 +222,7 @@ public final class SATEncoding {
     private static int[] unpair(int z) {
         /*
         Cantor unpair function is the reverse of the pairing function. It takes a single input
-        and returns the two corespoding values.
+        and returns the two corresponding values.
         */
         int t = (int) (Math.floor((Math.sqrt(8 * z + 1) - 1) / 2));
         int bitnum = t * (t + 3) / 2 - z;
@@ -200,9 +239,40 @@ public final class SATEncoding {
             this.currentDimacs.add(List.of(pair(init.get(0), 1)));
         }
 
-        for(int index=from; index < to; index++){
-            encodeFluents(actionPreconditionList, index);
-            encodeFluents(actionEffectList, index);
+        final int nb_fluents = initList.size();
+
+        for(int step=from; step<to; step++){
+            for(int action=0; action<this.nb_actions; action++){
+                for(List<Integer> precond : actionPreconditionList){
+                    this.currentDimacs.add(List.of(
+                        -pair(action+nb_fluents, step),
+                        pair(precond.get(0), step)
+                    ));
+                }
+                for(List<Integer> effect : actionEffectList){
+                    this.currentDimacs.add(List.of(
+                        -pair(action+nb_fluents, step),
+                        pair(effect.get(0), step+1)
+                    ));
+                }
+            }
+            for(Map.Entry<Integer, List<Integer>> entry : addList.entrySet()){
+                List<Integer> transition = List.of(
+                    pair(entry.getKey(), step),
+                    -pair(entry.getKey(), step+1)
+                );
+                for(Integer action : entry.getValue()){
+                    transition.add(pair(action, step));
+                }
+                this.currentDimacs.add(transition);
+            }
+            for(int index=0; index<actionDisjunctionList.size(); index++){
+                List<Integer> clause = actionDisjunctionList.get(index);
+                this.currentDimacs.add(List.of(
+                    pair(clause.get(0), step),
+                    pair(clause.get(1), step)
+                ));
+            }
         }
 
         for(int goal : goalList){
@@ -213,9 +283,9 @@ public final class SATEncoding {
                 + this.currentGoal.size()) + " clauses, " + to + " steps)");
     }
 
-    private void encodeFluents(List<List<Integer>> fluents, int step){
-        for(List<Integer> clause : fluents){
-            this.currentDimacs.add(List.of(pair(clause.get(0)+1, step)));
-        }
-    }
+    // private void encodeFluents(List<List<Integer>> fluents, int step){
+    //     for(List<Integer> clause : fluents){
+    //         this.currentDimacs.add(List.of(pair(clause.get(0)+1, step)));
+    //     }
+    // }
 }

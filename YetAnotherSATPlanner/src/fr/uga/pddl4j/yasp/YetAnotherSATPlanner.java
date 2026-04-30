@@ -6,8 +6,10 @@ import fr.uga.pddl4j.parser.ErrorManager;
 import fr.uga.pddl4j.parser.Message;
 import fr.uga.pddl4j.parser.Parser;
 import fr.uga.pddl4j.problem.DefaultProblem;
+import fr.uga.pddl4j.problem.Fluent;
 import fr.uga.pddl4j.problem.Problem;
 import fr.uga.pddl4j.problem.State;
+import fr.uga.pddl4j.problem.operator.Action;
 import fr.uga.pddl4j.planners.statespace.AbstractStateSpacePlanner;
 import fr.uga.pddl4j.planners.LogLevel;
 import fr.uga.pddl4j.plan.Plan;
@@ -60,6 +62,25 @@ public class YetAnotherSATPlanner extends AbstractStateSpacePlanner {
         return pb;
     }
 
+    public static String toString(final Problem problem){
+        StringBuilder res = new StringBuilder();
+
+        res.append("fluents : "+problem.getFluents().size()+"\n");
+        for(Fluent fluent : problem.getFluents()){
+            res.append("\t"+problem.toString(fluent)+" "+fluent+"\n");
+        }
+
+        res.append("actions : "+problem.getActions().size()+"\n");
+        for(Action action : problem.getActions()){
+            res.append("\t"+problem.toShortString(action)+" (");
+            for(int index=0; index<action.arity(); index++){
+                res.append(action.getValueOfParameter(index)+" ");
+            }
+            res.append(")\n");
+        }
+        return res.toString();
+    }
+
     /**
      * Solves the planning problem and returns the first solution found.
      *
@@ -68,6 +89,8 @@ public class YetAnotherSATPlanner extends AbstractStateSpacePlanner {
      */
     @Override
     public Plan solve(final Problem problem) {
+
+        System.out.println("solving problem :\n"+toString(problem));
 
         int stepmax = MAXSTEPS;
         Plan plan = null;
@@ -138,23 +161,25 @@ public class YetAnotherSATPlanner extends AbstractStateSpacePlanner {
                 }else{
                     System.out.println("problem solved");
                     int[] model = {};
-                    try {
-                        model = ip.findModel();
-                    } catch (TimeoutException e) {
-                        e.printStackTrace();
-                    }
+                    model = ip.model();
+                    // try {
+                    //     model = ip.findModel();
+                    // } catch (TimeoutException e) {
+                    //     e.printStackTrace();
+                    // }
                     List<Integer> solution = new ArrayList<>();
                     for(int item : model){
                         solution.add(item);
                     }
                     System.out.println(solution);
-                    plan = sat.extractPlan(solution, problem);
-                    System.out.println(sat.toString(solution, problem));
+                    System.out.println(SATEncoding.toString(solution, problem));
+                    plan = SATEncoding.extractPlan(solution, problem);
                 }
             }
         }
         return plan;
     }
+
     public static void main(final String[] args) {
 
         // Checks the number of arguments from the command line
@@ -194,14 +219,13 @@ public class YetAnotherSATPlanner extends AbstractStateSpacePlanner {
                     System.out.println("Goal can be simplified to FALSE. No search will solve it");
                     System.exit(0);
                 } else {
-
                     Plan plan = planner.solve(problem);
 
-                        if (plan != null) {
-                            System.out.println(problem.toString(plan));
-                        } else {
-                            System.out.println("No solution found!");
-                        }
+                    if (plan != null) {
+                        System.out.println("solution :\n"+problem.toString(plan));
+                    } else {
+                        System.out.println("No solution found!");
+                    }
                 }
             }
             // This exception could happen if the domain or the problem does not exist
