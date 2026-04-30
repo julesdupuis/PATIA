@@ -109,6 +109,10 @@ public class YetAnotherSATPlanner extends AbstractStateSpacePlanner {
 
             // Create the SAT encoding
             SATEncoding sat = new SATEncoding(problem, steps);
+            // for(Action action : problem.getActions()){
+            //     System.out.println(problem.toString(action));
+            // }
+            System.out.println(sat.toString(problem));
 
             // Create the SAT solver
             final ISolver solver = SolverFactory.newDefault();
@@ -171,7 +175,7 @@ public class YetAnotherSATPlanner extends AbstractStateSpacePlanner {
                     for(int item : model){
                         solution.add(item);
                     }
-                    System.out.println(solution);
+                    // System.out.println(solution);
                     System.out.println(SATEncoding.toString(solution, problem));
                     plan = SATEncoding.extractPlan(solution, problem);
                 }

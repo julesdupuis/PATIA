@@ -22,6 +22,8 @@ public final class SATEncoding {
     /*
      * A SAT problem in dimacs format is a list of int list a.k.a clauses
      */
+
+    private final int nb_fluents;
     private List<List<Integer>> initList = new ArrayList<List<Integer>>();
 
     /*
@@ -74,16 +76,13 @@ public final class SATEncoding {
         // Init state step is 1
         // We get the initial state from the planning problem
         // State is a bit vector where the ith bit at 1 corresponds to the ith fluent being true
-        final int nb_fluents = problem.getFluents().size();
+        nb_fluents = problem.getFluents().size();
         System.out.println(" fluents = " + nb_fluents );
 
         // initial state
         final BitVector initState = problem.getInitialState().getPositiveFluents();
-        for(int index=0; index<initState.size(); index++){
+        for(int index=0; index<nb_fluents; index++){
             initList.add(List.of(initState.get(index) ? index+1 : -(index+1)));
-            // if(initState.get(index)){
-            //     initList.add(List.of(index+1));
-            // }
         }
 
         // goal
@@ -101,27 +100,49 @@ public final class SATEncoding {
             Action action = actions.get(index);
 
             // preconditions
+            List<Integer> precondList = new ArrayList<>();
             final BitVector preconds = action.getPrecondition().getPositiveFluents();
             for(int jndex=0; jndex<preconds.size(); jndex++){
                 if(preconds.get(jndex)){
-                    actionPreconditionList.add(List.of(jndex+1));
+                    precondList.add(jndex+1);
                 }
             }
+            actionPreconditionList.add(precondList);
 
             // effects
+            List<Integer> effectList = new ArrayList<>();
             final BitVector effects = action.getUnconditionalEffect().getPositiveFluents();
             for(int jndex=0; jndex<effects.size(); jndex++){
                 if(effects.get(jndex)){
-                    actionEffectList.add(List.of(jndex+1));
+                    int e = jndex+1;
+                    effectList.add(e);
 
                     // for state transitions
-                    if(addList.containsKey(jndex+1)){
-                        addList.get(jndex+1).add(index+1);
+                    int a = index+1;
+                    if(addList.containsKey(e)){
+                        addList.get(e).add(a);
                     }else{
-                        addList.put(jndex+1, new ArrayList<Integer>(index+1));
+                        addList.put(e, new ArrayList<Integer>(a));
                     }
                 }
             }
+            // negative effects
+            final BitVector neffects = action.getUnconditionalEffect().getNegativeFluents();
+            for(int jndex=0; jndex<neffects.size(); jndex++){
+                if(neffects.get(jndex)){
+                    int e = jndex+1;
+                    effectList.add(-e);
+
+                    // for state transitions
+                    int a = index+1;
+                    if(delList.containsKey(e)){
+                        delList.get(e).add(a);
+                    }else{
+                        delList.put(e, new ArrayList<Integer>(a));
+                    }
+                }
+            }
+            actionEffectList.add(effectList);
 
             // state transitions
 
@@ -234,6 +255,7 @@ public final class SATEncoding {
         this.currentDimacs.clear();
         this.currentGoal.clear();
 
+        // init state
         for(List<Integer> init : initList){
             // init state step is 1
             this.currentDimacs.add(List.of(pair(init.get(0), 1)));
@@ -242,6 +264,7 @@ public final class SATEncoding {
         final int nb_fluents = initList.size();
 
         for(int step=from; step<to; step++){
+            // actions
             for(int action=0; action<this.nb_actions; action++){
                 for(List<Integer> precond : actionPreconditionList){
                     this.currentDimacs.add(List.of(
@@ -256,6 +279,7 @@ public final class SATEncoding {
                     ));
                 }
             }
+            // transitions
             for(Map.Entry<Integer, List<Integer>> entry : addList.entrySet()){
                 List<Integer> transition = List.of(
                     pair(entry.getKey(), step),
@@ -266,6 +290,17 @@ public final class SATEncoding {
                 }
                 this.currentDimacs.add(transition);
             }
+            for(Map.Entry<Integer, List<Integer>> entry : delList.entrySet()){
+                List<Integer> transition = List.of(
+                    -pair(entry.getKey(), step),
+                    pair(entry.getKey(), step+1)
+                );
+                for(Integer action : entry.getValue()){
+                    transition.add(pair(action, step));
+                }
+                this.currentDimacs.add(transition);
+            }
+            // disjunctions
             for(int index=0; index<actionDisjunctionList.size(); index++){
                 List<Integer> clause = actionDisjunctionList.get(index);
                 this.currentDimacs.add(List.of(
@@ -275,17 +310,68 @@ public final class SATEncoding {
             }
         }
 
+        // goal
         for(int goal : goalList){
-            this.currentGoal.add(pair(goal+1, to));
+            this.currentGoal.add(pair(goal, to));
         }
 
         System.out.println("Encoding : successfully done (" + (this.currentDimacs.size()
                 + this.currentGoal.size()) + " clauses, " + to + " steps)");
     }
 
-    // private void encodeFluents(List<List<Integer>> fluents, int step){
-    //     for(List<Integer> clause : fluents){
-    //         this.currentDimacs.add(List.of(pair(clause.get(0)+1, step)));
-    //     }
-    // }
+    public String toString(Problem problem){
+        StringBuilder res = new StringBuilder();
+
+        res.append("\ninit state :\n");
+        // System.err.println(initList);
+        stringCNF(res, initList, problem, false);
+
+        res.append("\ngoal :\n");
+        // System.err.println(goalList);
+        stringClause(res, goalList, problem, false);
+        res.append("\n");
+
+        res.append("\naction preconditions :\n");
+        // System.err.println(actionPreconditionList);
+        stringCNF(res, actionPreconditionList, problem, false);
+
+        res.append("\naction effects :\n");
+        // System.err.println(actionEffectList);
+        stringCNF(res, actionEffectList, problem, false);
+
+        res.append("\naction disjunctions :\n");
+        // System.err.println(actionDisjunctionList);
+        stringCNF(res, actionDisjunctionList, problem, true);
+
+        return res.toString();
+    }
+
+    private void stringCNF(StringBuilder builder, List<List<Integer>> cnf, Problem problem, boolean isActions){
+        builder.append("{");
+        for(List<Integer> clause : cnf){
+            stringClause(builder, clause, problem, isActions);
+        }
+        builder.append("}\n");
+    }
+
+    private void stringClause(StringBuilder builder, List<Integer> clause, Problem problem, boolean isActions){
+        builder.append("[");
+        for(Integer fluent : clause){
+            builder.append(" ");
+            int f = fluent;
+            if(fluent<0){
+                builder.append("-");
+                f = -fluent;
+            }
+            f -= 1;
+            if(!isActions){
+                builder.append(problem.toString(problem.getFluents().get(f)));
+            }else{
+                builder.append("(");
+                builder.append(problem.toShortString(problem.getActions().get(f)));
+                builder.append(")");
+            }
+        }
+        builder.append(" ]");
+    }
 }
