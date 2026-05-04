@@ -109,6 +109,8 @@ public class YetAnotherSATPlanner extends AbstractStateSpacePlanner {
 
             // Create the SAT encoding
             SATEncoding sat = new SATEncoding(problem, steps);
+
+            // System.out.println();
             // for(Action action : problem.getActions()){
             //     System.out.println(problem.toString(action));
             // }

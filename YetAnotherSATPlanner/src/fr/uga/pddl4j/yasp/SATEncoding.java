@@ -119,11 +119,10 @@ public final class SATEncoding {
 
                     // for state transitions
                     int action_id = index+1;
-                    if(addList.containsKey(effect_id)){
-                        addList.get(effect_id).add(action_id);
-                    }else{
-                        addList.put(effect_id, new ArrayList<Integer>(action_id));
+                    if(!addList.containsKey(effect_id)){
+                        addList.put(effect_id, new ArrayList<Integer>());
                     }
+                    addList.get(effect_id).add(action_id);
                 }
             }
             // negative effects
@@ -135,11 +134,10 @@ public final class SATEncoding {
 
                     // for state transitions
                     int action_id = index+1;
-                    if(delList.containsKey(effect_id)){
-                        delList.get(effect_id).add(action_id);
-                    }else{
-                        delList.put(effect_id, new ArrayList<Integer>(action_id));
+                    if(!delList.containsKey(effect_id)){
+                        delList.put(effect_id, new ArrayList<Integer>());
                     }
+                    delList.get(effect_id).add(action_id);
                 }
             }
             actionEffectList.add(effectList);
@@ -270,14 +268,14 @@ public final class SATEncoding {
                 List<Integer> actionPrecond = actionPreconditionList.get(action);
                 for(Integer precond : actionPrecond){
                     this.currentDimacs.add(List.of(
-                        -pair(action+nb_fluents, step),
+                        -pair(action+nb_fluents+1, step),
                         pair(precond, step)
                     ));
                 }
                 List<Integer> actionEffect = actionEffectList.get(action);
                 for(Integer effect : actionEffect){
                     this.currentDimacs.add(List.of(
-                        -pair(action+nb_fluents, step),
+                        -pair(action+nb_fluents+1, step),
                         pair(effect, step+1)
                     ));
                 }
@@ -341,6 +339,32 @@ public final class SATEncoding {
         res.append("\naction effects :\n");
         // System.err.println(actionEffectList);
         stringCNF(res, actionEffectList, problem, false);
+
+        res.append("\naction transitions :\n");
+        // System.err.println(addList);
+        res.append("add :\n");
+        for(Map.Entry<Integer, List<Integer>> entry : addList.entrySet()){
+            res.append(problem.toString(problem.getFluents().get(entry.getKey()-1)));
+            res.append(" : [ ");
+            for(Integer action : entry.getValue()){
+                res.append("( ");
+                res.append(problem.toShortString(problem.getActions().get(action-1)));
+                res.append(" ) ");
+            }
+            res.append("]");
+        }
+        // System.err.println(delList);
+        res.append("\ndel :\n");
+        for(Map.Entry<Integer, List<Integer>> entry : delList.entrySet()){
+            res.append(problem.toString(problem.getFluents().get(entry.getKey()-1)));
+            res.append(" : [ ");
+            for(Integer action : entry.getValue()){
+                res.append("( ");
+                res.append(problem.toShortString(problem.getActions().get(action-1)));
+                res.append(" ) ");
+            }
+            res.append("]");
+        }
 
         res.append("\naction disjunctions :\n");
         // System.err.println(actionDisjunctionList);
