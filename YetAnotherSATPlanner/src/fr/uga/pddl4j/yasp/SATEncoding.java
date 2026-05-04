@@ -237,10 +237,12 @@ public final class SATEncoding {
 
     // Cantor pairing function generates unique numbers
     private static int pair(int num, int step) {
+        if(num<0 || step<0) throw new IllegalArgumentException(Integer.toString(num)+", "+Integer.toString(step));
         return (int) (0.5 * (num + step) * (num + step + 1) + step);
     }
 
     private static int[] unpair(int z) {
+        if(z<0) throw new IllegalArgumentException(Integer.toString(z));
         /*
         Cantor unpair function is the reverse of the pairing function. It takes a single input
         and returns the two corresponding values.
@@ -258,43 +260,46 @@ public final class SATEncoding {
         // init state
         for(List<Integer> init : initList){
             // init state step is 1
-            this.currentDimacs.add(List.of(pair(init.get(0), 1)));
+            int f = init.get(0);
+            this.currentDimacs.add(List.of(f>0 ? pair(f, 1) : -pair(-f, 1)));
         }
 
         final int nb_fluents = initList.size();
 
-        for(int step=from; step<to; step++){
+        for(int step=from; step<=to; step++){
             // actions
             for(int action=0; action<this.nb_actions; action++){
-                for(List<Integer> precond : actionPreconditionList){
+                List<Integer> actionPrecond = actionPreconditionList.get(action);
+                for(Integer precond : actionPrecond){
                     this.currentDimacs.add(List.of(
                         -pair(action+nb_fluents, step),
-                        pair(precond.get(0), step)
+                        pair(precond, step)
                     ));
                 }
-                for(List<Integer> effect : actionEffectList){
+                List<Integer> actionEffect = actionEffectList.get(action);
+                for(Integer effect : actionEffect){
                     this.currentDimacs.add(List.of(
                         -pair(action+nb_fluents, step),
-                        pair(effect.get(0), step+1)
+                        pair(effect, step+1)
                     ));
                 }
             }
             // transitions
             for(Map.Entry<Integer, List<Integer>> entry : addList.entrySet()){
-                List<Integer> transition = List.of(
-                    pair(entry.getKey(), step),
-                    -pair(entry.getKey(), step+1)
-                );
+                List<Integer> transition = new ArrayList<>();
+                transition.add(pair(entry.getKey(), step));
+                transition.add(-pair(entry.getKey(), step+1));
+
                 for(Integer action : entry.getValue()){
                     transition.add(pair(action, step));
                 }
                 this.currentDimacs.add(transition);
             }
             for(Map.Entry<Integer, List<Integer>> entry : delList.entrySet()){
-                List<Integer> transition = List.of(
-                    -pair(entry.getKey(), step),
-                    pair(entry.getKey(), step+1)
-                );
+                List<Integer> transition = new ArrayList<>();
+                transition.add(-pair(entry.getKey(), step));
+                transition.add(pair(entry.getKey(), step+1));
+
                 for(Integer action : entry.getValue()){
                     transition.add(pair(action, step));
                 }
@@ -304,15 +309,15 @@ public final class SATEncoding {
             for(int index=0; index<actionDisjunctionList.size(); index++){
                 List<Integer> clause = actionDisjunctionList.get(index);
                 this.currentDimacs.add(List.of(
-                    pair(clause.get(0), step),
-                    pair(clause.get(1), step)
+                    -pair(-clause.get(0)+nb_fluents, step),
+                    -pair(-clause.get(1)+nb_fluents, step)
                 ));
             }
         }
 
         // goal
         for(int goal : goalList){
-            this.currentGoal.add(pair(goal, to));
+            this.currentGoal.add(pair(goal, to+1));
         }
 
         System.out.println("Encoding : successfully done (" + (this.currentDimacs.size()
@@ -342,6 +347,14 @@ public final class SATEncoding {
         res.append("\naction disjunctions :\n");
         // System.err.println(actionDisjunctionList);
         stringCNF(res, actionDisjunctionList, problem, true);
+
+        res.append("\ndimacs :\n");
+        for(List<Integer> clause : this.currentDimacs){
+            res.append(SATEncoding.toString(clause, problem));
+            res.append("\n");
+        }
+        res.append("\ngoal :\n");
+        res.append(SATEncoding.toString(this.currentGoal, problem));
 
         return res.toString();
     }

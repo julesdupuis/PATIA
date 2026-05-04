@@ -127,11 +127,11 @@ public class YetAnotherSATPlanner extends AbstractStateSpacePlanner {
             while (doSearch && !(steps > stepmax)) {
                 // add clauses
                 for(int index=0; index<sat.currentDimacs.size(); index++){
-                    List<Integer> tmp = sat.currentDimacs.get(index);
+                    List<Integer> satclause = sat.currentDimacs.get(index);
 
-                    int[] clause = new int[tmp.size()];
-                    for(int jndex=0; jndex<clause.length; jndex++){
-                        clause[jndex] = tmp.get(jndex);
+                    int[] clause = new int[satclause.size()];
+                    for(int jndex=0; jndex<satclause.size(); jndex++){
+                        clause[jndex] = satclause.get(jndex);
                     }
 
                     try {
@@ -143,7 +143,7 @@ public class YetAnotherSATPlanner extends AbstractStateSpacePlanner {
 
                 // goal
                 int[] clause = new int[sat.currentGoal.size()];
-                for(int jndex=0; jndex<clause.length; jndex++){
+                for(int jndex=0; jndex<sat.currentGoal.size(); jndex++){
                     clause[jndex] = sat.currentGoal.get(jndex);
                 }
 
@@ -166,16 +166,11 @@ public class YetAnotherSATPlanner extends AbstractStateSpacePlanner {
                     System.out.println("problem solved");
                     int[] model = {};
                     model = ip.model();
-                    // try {
-                    //     model = ip.findModel();
-                    // } catch (TimeoutException e) {
-                    //     e.printStackTrace();
-                    // }
+
                     List<Integer> solution = new ArrayList<>();
                     for(int item : model){
                         solution.add(item);
                     }
-                    // System.out.println(solution);
                     System.out.println(SATEncoding.toString(solution, problem));
                     plan = SATEncoding.extractPlan(solution, problem);
                 }
@@ -226,7 +221,8 @@ public class YetAnotherSATPlanner extends AbstractStateSpacePlanner {
                     Plan plan = planner.solve(problem);
 
                     if (plan != null) {
-                        System.out.println("solution :\n"+problem.toString(plan));
+                        System.out.println("solution :");
+                        System.out.println(problem.toString(plan));
                     } else {
                         System.out.println("No solution found!");
                     }
