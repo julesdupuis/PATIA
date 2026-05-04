@@ -114,15 +114,15 @@ public final class SATEncoding {
             final BitVector effects = action.getUnconditionalEffect().getPositiveFluents();
             for(int jndex=0; jndex<effects.size(); jndex++){
                 if(effects.get(jndex)){
-                    int e = jndex+1;
-                    effectList.add(e);
+                    int effect_id = jndex+1;
+                    effectList.add(effect_id);
 
                     // for state transitions
-                    int a = index+1;
-                    if(addList.containsKey(e)){
-                        addList.get(e).add(a);
+                    int action_id = index+1;
+                    if(addList.containsKey(effect_id)){
+                        addList.get(effect_id).add(action_id);
                     }else{
-                        addList.put(e, new ArrayList<Integer>(a));
+                        addList.put(effect_id, new ArrayList<Integer>(action_id));
                     }
                 }
             }
@@ -130,15 +130,15 @@ public final class SATEncoding {
             final BitVector neffects = action.getUnconditionalEffect().getNegativeFluents();
             for(int jndex=0; jndex<neffects.size(); jndex++){
                 if(neffects.get(jndex)){
-                    int e = jndex+1;
-                    effectList.add(-e);
+                    int effect_id = jndex+1;
+                    effectList.add(-effect_id);
 
                     // for state transitions
-                    int a = index+1;
-                    if(delList.containsKey(e)){
-                        delList.get(e).add(a);
+                    int action_id = index+1;
+                    if(delList.containsKey(effect_id)){
+                        delList.get(effect_id).add(action_id);
                     }else{
-                        delList.put(e, new ArrayList<Integer>(a));
+                        delList.put(effect_id, new ArrayList<Integer>(action_id));
                     }
                 }
             }
@@ -289,7 +289,7 @@ public final class SATEncoding {
                 transition.add(-pair(entry.getKey(), step+1));
 
                 for(Integer action : entry.getValue()){
-                    transition.add(pair(action, step));
+                    transition.add(pair(action+nb_fluents, step));
                 }
                 this.currentDimacs.add(transition);
             }
@@ -299,7 +299,7 @@ public final class SATEncoding {
                 transition.add(pair(entry.getKey(), step+1));
 
                 for(Integer action : entry.getValue()){
-                    transition.add(pair(action, step));
+                    transition.add(pair(action+nb_fluents, step));
                 }
                 this.currentDimacs.add(transition);
             }
