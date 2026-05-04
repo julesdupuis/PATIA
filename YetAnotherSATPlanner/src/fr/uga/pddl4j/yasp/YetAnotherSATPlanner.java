@@ -81,6 +81,31 @@ public class YetAnotherSATPlanner extends AbstractStateSpacePlanner {
         return res.toString();
     }
 
+    private static void addClause(ISolver solver, List<Integer> satClause) throws ContradictionException{
+        int[] clause = new int[satClause.size()];
+        for(int jndex=0; jndex<satClause.size(); jndex++){
+            clause[jndex] = satClause.get(jndex);
+        }
+
+        solver.addClause(new VecInt(clause));
+
+        // try {
+        //     solver.addClause(new VecInt(clause));
+        // } catch (ContradictionException e) {
+        //     e.printStackTrace();
+
+        //     StringBuilder s = new StringBuilder();
+        //     s.append("[ ");
+        //     for(int index=0; index<clause.length; index++){
+        //         s.append(clause[index]);
+        //         s.append(" ");
+        //     }
+        //     s.append("]");
+        //     System.err.println("original : "+satClause);
+        //     System.err.println("clause : "+s);
+        // }
+    }
+
     /**
      * Solves the planning problem and returns the first solution found.
      *
@@ -114,7 +139,8 @@ public class YetAnotherSATPlanner extends AbstractStateSpacePlanner {
             // for(Action action : problem.getActions()){
             //     System.out.println(problem.toString(action));
             // }
-            System.out.println(sat.toString(problem));
+
+            // System.out.println(sat.toString(problem));
 
             // Create the SAT solver
             final ISolver solver = SolverFactory.newDefault();
@@ -126,33 +152,31 @@ public class YetAnotherSATPlanner extends AbstractStateSpacePlanner {
             // Search starts here!
             boolean doSearch = true;
 
+            searching:
             while (doSearch && !(steps > stepmax)) {
                 // add clauses
                 for(int index=0; index<sat.currentDimacs.size(); index++){
-                    List<Integer> satclause = sat.currentDimacs.get(index);
-
-                    int[] clause = new int[satclause.size()];
-                    for(int jndex=0; jndex<satclause.size(); jndex++){
-                        clause[jndex] = satclause.get(jndex);
-                    }
-
-                    try {
-                        solver.addClause(new VecInt(clause));
-                    } catch (ContradictionException e) {
-                        e.printStackTrace();
+                    List<Integer> satClause = sat.currentDimacs.get(index);
+                    try{
+                        addClause(solver, satClause);
+                    }catch(ContradictionException e){
+                        // not enough steps to get a correct problem
+                        sat.next();
+                        solver.reset();
+                        steps++;
+                        continue searching;
                     }
                 }
 
                 // goal
-                int[] clause = new int[sat.currentGoal.size()];
-                for(int jndex=0; jndex<sat.currentGoal.size(); jndex++){
-                    clause[jndex] = sat.currentGoal.get(jndex);
-                }
-
-                try {
-                    solver.addClause(new VecInt(clause));
-                } catch (ContradictionException e) {
-                    e.printStackTrace();
+                try{
+                    addClause(solver, sat.currentGoal);
+                }catch(ContradictionException e){
+                    // not enough steps to get a correct problem
+                    sat.next();
+                    solver.reset();
+                    steps++;
+                    continue searching;
                 }
 
                 IProblem ip = solver;
@@ -163,6 +187,7 @@ public class YetAnotherSATPlanner extends AbstractStateSpacePlanner {
                 }
                 if(doSearch){
                     sat.next();
+                    solver.reset();
                     steps++;
                 }else{
                     System.out.println("problem solved");

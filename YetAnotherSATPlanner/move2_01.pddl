@@ -1,0 +1,12 @@
+(define (problem move2_01)
+   (:domain move2)
+   (:objects rooma roomb roomc)
+   (:init (room rooma)
+          (room roomb)
+          (room roomc)
+          (at-robby rooma)
+          (next rooma roomb) (next roomb rooma)
+          (next roomb roomc) (next roomc roomb)
+          )
+   (:goal (and
+               (at-robby roomc))))

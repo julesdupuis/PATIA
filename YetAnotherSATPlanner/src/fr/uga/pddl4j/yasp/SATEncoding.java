@@ -351,7 +351,7 @@ public final class SATEncoding {
                 res.append(problem.toShortString(problem.getActions().get(action-1)));
                 res.append(" ) ");
             }
-            res.append("]");
+            res.append("]\n");
         }
         // System.err.println(delList);
         res.append("\ndel :\n");
