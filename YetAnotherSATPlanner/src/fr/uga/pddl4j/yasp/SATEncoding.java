@@ -147,10 +147,8 @@ public final class SATEncoding {
             // state transitions
 
             // disjonctions
-            for(int jndex=0; jndex<actions.size(); jndex++){
-                if(index != jndex){
-                    actionDisjunctionList.add(List.of(-(index+1), -(jndex+1)));
-                }
+            for(int jndex=0; jndex<index; jndex++){
+                actionDisjunctionList.add(List.of(-(index+1), -(jndex+1)));
             }
         }
 
