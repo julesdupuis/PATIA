@@ -140,7 +140,7 @@ public class YetAnotherSATPlanner extends AbstractStateSpacePlanner {
             //     System.out.println(problem.toString(action));
             // }
 
-            // System.out.println(sat.toString(problem));
+            System.out.println(sat.toString(problem));
 
             // Create the SAT solver
             final ISolver solver = SolverFactory.newDefault();
@@ -169,14 +169,16 @@ public class YetAnotherSATPlanner extends AbstractStateSpacePlanner {
                 }
 
                 // goal
-                try{
-                    addClause(solver, sat.currentGoal);
-                }catch(ContradictionException e){
-                    // not enough steps to get a correct problem
-                    sat.next();
-                    solver.reset();
-                    steps++;
-                    continue searching;
+                for(int index=0; index<sat.currentGoal.size(); index++){
+                    try{
+                        solver.addClause(new VecInt(new int[]{sat.currentGoal.get(index)}));
+                    }catch(ContradictionException e){
+                        // not enough steps to get a correct problem
+                        sat.next();
+                        solver.reset();
+                        steps++;
+                        continue searching;
+                    }
                 }
 
                 IProblem ip = solver;
